@@ -36,8 +36,8 @@ class TagDataset(Dataset):
         labels = data_instance["labels"]
 
         # convert to int sequences
-        words = [self.word_to_idx[w] for w in words]
-        labels = [self.label_to_idx[l] for l in labels]
+        words = [self.word_to_idx.get(w, 0) for w in words]
+        labels = [self.label_to_idx.get(l) for l in labels]
 
         return words, labels
 
