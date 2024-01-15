@@ -42,19 +42,15 @@ class TagDataset(Dataset):
         return words, labels
 
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
-        if self.indices is None:
-            idx = index
-        else:
-            idx = self.indices[index]
-
-        data = self.dataset[idx]
+        data = self.dataset[index]
         words, labels = self.__encode(data)
 
         # padding
-        words = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
-        words[:len(data["words"])] = data["words"]
+        words_padded = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
+        words_padded[:len(words)] = words
 
-        labels = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
-        labels[:len(data["labels"])] = data["labels"]
+        labels_padded = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
+        labels_padded[:len(labels)] = labels
 
-        return words, labels
+        # return padded words and labels
+        return words_padded, labels_padded
