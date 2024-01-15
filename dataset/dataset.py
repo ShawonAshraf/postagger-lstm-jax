@@ -5,7 +5,6 @@ from typing import Tuple
 import numpy as np
 from torch.utils.data import Dataset
 
-
 """
 class TagDataset
 
@@ -38,7 +37,7 @@ class TagDataset(Dataset):
         else:
             return len(self.indices)
 
-    def __getitem__(self, index) -> Tuple[np.ndarray, np.ndarray]:
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         if self.indices is None:
             idx = index
         else:
@@ -46,12 +45,11 @@ class TagDataset(Dataset):
 
         data = self.dataset[idx]
 
-        # padding to 300
-        # pad token idx is 1
-        words = np.ones((300,), dtype=np.int32)
+        # padding
+        words = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
         words[:len(data["words"])] = data["words"]
 
-        labels = np.ones((300,), dtype=np.int32)
+        labels = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
         labels[:len(data["labels"])] = data["labels"]
 
         return words, labels
