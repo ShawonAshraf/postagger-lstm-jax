@@ -8,38 +8,26 @@ from torch.utils.data import Dataset
 """
 class TagDataset
 
-indices: list or a numpy ndarray, which contains the indices to load from the dataset
-        applicable for the train and validation split. For the test split, indices will be none.
-        
-        reason: 'batterydata/pos_tagging' dataset provides test and train splits. the validation split
-                will need to be created from the train split.
-        
-dataset: a datasets.Dataset object, which contains the whole dataset
+dataset_split: a datasets.Dataset object, which contains the train / test / validation split
 pad_token_idx: int, the padding token index in the vocabulary, used for padding
 max_seq_len: int, maximum sequence length to pad all sequences to
 """
 
 
 class TagDataset(Dataset):
-    def __init__(self, indices: list | np.ndarray | None,
-                 dataset: datasets.Dataset,
+    def __init__(self, dataset_split: datasets.Dataset,
                  pad_token_idx: int,
                  max_seq_len: int,
                  word_to_idx: dict,
                  label_to_idx: dict) -> None:
-        self.indices = indices
-        self.dataset = dataset
+        self.dataset = dataset_split
         self.pad_token_idx = pad_token_idx
         self.max_seq_len = max_seq_len
         self.word_to_idx = word_to_idx
         self.label_to_idx = label_to_idx
 
-    def __len__(self):
-        if self.indices is None:
-            # this is for the test split
-            return len(self.dataset)
-        else:
-            return len(self.indices)
+    def __len__(self) -> int:
+        return len(self.dataset)
 
     # use word_to_idx and label_to_idx to convert
     # the string sequences to int sequences
