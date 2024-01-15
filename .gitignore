@@ -1,0 +1,10 @@
+<<<<<<< HEAD
+venv
+.idea/
+.DS_Store
+
+=======
+.idea/
+.vscode/
+venv/
+>>>>>>> 4f430e0 (gitignore file)
