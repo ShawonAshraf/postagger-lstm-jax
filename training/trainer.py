@@ -5,7 +5,8 @@ from tqdm.auto import trange
 from flax.training import train_state
 import optax
 import flax.linen as nn
-from typing import Any
+from typing import Any, Callable
+from tqdm.auto import tqdm
 
 """
 class Trainer
@@ -27,7 +28,7 @@ class Trainer:
                  max_epochs: int,
                  log_every_n_step: int,
                  model_rngs: dict,
-                 logger: Any):
+                 logger: Any) -> None:
 
         self.model = model
         self.init_params = init_params
@@ -56,6 +57,7 @@ class Trainer:
 
         @jit
         def batched_softmax_ce(params, words_batched, labels_batched):
+            # vmap over batch
             batch_loss = vmap(softmax_ce, in_axes=(None, 0, 0))(params, words_batched, labels_batched)
 
             # return mean over batch
@@ -83,7 +85,49 @@ class Trainer:
 
         self.validation_step = validation_step
 
-    def train(self, train_loader, val_loader):
+        # ================== #
+        # accuracy #
+        def categorical_accuracy(preds, actual, pad_idx=1):
+            non_padding_indices = jnp.nonzero((actual != pad_idx))
+
+            matches = jnp.equal(preds[non_padding_indices], actual[non_padding_indices])
+            acc = jnp.sum(matches) / actual[non_padding_indices].shape[0]
+
+            return acc
+
+        # ================== #
+        # inference #
+        @jit
+        def infer(params, words):
+            logits = self.model.apply(params, words, rngs={"dropout": self.model_rngs["dropout"]})
+            proba = jax.nn.log_softmax(logits, axis=-1)
+            preds = jnp.argmax(proba, axis=-1)
+
+            return preds
+
+        @jit
+        def batch_infer(params, words_batched):
+            preds = vmap(infer, in_axes=(None, 0))(params, words_batched)
+            return preds
+
+        # ================== #
+        # evaluate #
+        def evaluate(params, test_loader):
+            acc_per_batch = list()
+            for batch in tqdm(test_loader):
+                words, labels = batch
+                preds = batch_infer(params, words)
+
+                acc = categorical_accuracy(preds, labels)
+                acc_per_batch.append(acc)
+
+            mean_acc = jnp.mean(jnp.array(acc_per_batch), axis=-1)
+
+            return mean_acc
+
+        self.evaluate = evaluate
+
+    def fit_and_eval(self, train_loader, val_loader, test_loader):
         # initialise the train state
         state = train_state.TrainState.create(
             apply_fn=self.model.apply,  # the forward function
@@ -96,8 +140,12 @@ class Trainer:
         mean_validation_losses = list()
         step_counter = 0
 
+        # ================== #
         # train loop
         for _ in trange(self.max_epochs):
+
+            # ================== #
+            # epoch start #
             for batch in train_loader:
                 # loss and updated state
                 loss_value, state = self.train_step(state, batch)
@@ -107,8 +155,10 @@ class Trainer:
                 # so only loss will be collected
 
                 if step_counter % self.log_every_n_step == 0:
-                    # log train loss
+                    # collect train loss
                     train_losses.append(loss_value)
+
+                    # ================== #
                     # run validation
                     validation_losses = list()
                     for validation_batch in val_loader:
@@ -125,6 +175,20 @@ class Trainer:
                         "train_loss": loss_value,
                         # mean over all validation batches
                         "val_loss": validation_losses.mean(axis=-1),
+                        "step": step_counter
+                    })
+
+                    # ================== #
+                    # evaluation
+                    train_accuracy = self.evaluate(state.params, train_loader)
+                    val_accuracy = self.evaluate(state.params, val_loader)
+                    test_accuracy = self.evaluate(state.params, test_loader)
+
+                    # log
+                    self.logger.log({
+                        "train_accuracy": train_accuracy,
+                        "val_accuracy": val_accuracy,
+                        "test_accuracy": test_accuracy,
                         "step": step_counter
                     })
 
