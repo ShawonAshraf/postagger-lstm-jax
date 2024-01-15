@@ -24,11 +24,15 @@ class TagDataset(Dataset):
     def __init__(self, indices: list | np.ndarray | None,
                  dataset: datasets.Dataset,
                  pad_token_idx: int,
-                 max_seq_len: int) -> None:
+                 max_seq_len: int,
+                 word_to_idx: dict,
+                 label_to_idx: dict) -> None:
         self.indices = indices
         self.dataset = dataset
         self.pad_token_idx = pad_token_idx
         self.max_seq_len = max_seq_len
+        self.word_to_idx = word_to_idx
+        self.label_to_idx = label_to_idx
 
     def __len__(self):
         if self.indices is None:
@@ -37,6 +41,18 @@ class TagDataset(Dataset):
         else:
             return len(self.indices)
 
+    # use word_to_idx and label_to_idx to convert
+    # the string sequences to int sequences
+    def __encode(self, data_instance: dict) -> Tuple[list, list]:
+        words = data_instance["words"]
+        labels = data_instance["labels"]
+
+        # convert to int sequences
+        words = [self.word_to_idx[w] for w in words]
+        labels = [self.label_to_idx[l] for l in labels]
+
+        return words, labels
+
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         if self.indices is None:
             idx = index
@@ -44,6 +60,7 @@ class TagDataset(Dataset):
             idx = self.indices[index]
 
         data = self.dataset[idx]
+        words, labels = self.__encode(data)
 
         # padding
         words = np.ones((self.max_seq_len,), dtype=np.int32) * self.pad_token_idx
