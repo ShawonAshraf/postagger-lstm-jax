@@ -94,8 +94,8 @@ def preprocess(dataset: datasets.Dataset,
                pad_token_idx: int = 1,
                validation_size: float = 0.2,
                seed: int = 42) -> PREPROCESSED:
-    word_to_idx = map_word_to_idx(dataset, pad_token_idx)
-    label_to_idx = map_label_to_idx(dataset, pad_token_idx)
+    word_to_idx = map_word_to_idx(dataset["train"], pad_token_idx)
+    label_to_idx = map_label_to_idx(dataset["train"], pad_token_idx)
 
     train_split, validation_split, test_split = prepare_splits(dataset, validation_size, seed)
 
