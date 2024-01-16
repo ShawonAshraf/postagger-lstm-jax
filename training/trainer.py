@@ -5,7 +5,7 @@ from tqdm.auto import trange
 from flax.training import train_state
 import optax
 import flax.linen as nn
-from typing import Any, Callable
+from typing import Any
 from tqdm.auto import tqdm
 
 """
@@ -44,11 +44,11 @@ class Trainer:
         # create util functions for training the model
         self.__create_utils()
 
-    def __create_utils(self):
+    def __create_utils(self) -> None:
         # ================== #
         # loss function and criterion #
         @jit
-        def softmax_ce(params, words, labels):
+        def softmax_ce(params: dict, words: jnp.ndarray, labels: jnp.ndarray) -> jnp.ndarray:
             logits = self.model.apply(params, words, rngs={"dropout": self.model_rngs["dropout"]})
             loss = optax.softmax_cross_entropy_with_integer_labels(logits, labels)
             # mean over all tag dimensions
@@ -56,7 +56,7 @@ class Trainer:
             return loss.mean(axis=-1)
 
         @jit
-        def batched_softmax_ce(params, words_batched, labels_batched):
+        def batched_softmax_ce(params: dict, words_batched: jnp.ndarray, labels_batched: jnp.ndarray) -> jnp.ndarray:
             # vmap over batch
             batch_loss = vmap(softmax_ce, in_axes=(None, 0, 0))(params, words_batched, labels_batched)
 
@@ -69,7 +69,7 @@ class Trainer:
         # ================== #
         # training step #
         @jit
-        def train_step(state, batch):
+        def train_step(state: train_state.TrainState, batch: tuple) -> tuple:
             loss_value, grads = self.gradient_computer(state.params, *batch)
             updated_state = state.apply_gradients(grads=grads)
             return loss_value, updated_state
@@ -79,7 +79,7 @@ class Trainer:
         # ================== #
         # validation step #
         @jit
-        def validation_step(state, batch):
+        def validation_step(state: train_state.TrainState, batch: tuple) -> jnp.ndarray:
             loss_value = self.loss_fn(state.params, *batch)
             return loss_value
 
@@ -87,7 +87,7 @@ class Trainer:
 
         # ================== #
         # accuracy #
-        def categorical_accuracy(preds, actual, pad_idx=1):
+        def categorical_accuracy(preds: jnp.ndarray, actual: jnp.ndarray, pad_idx: int = 1) -> jnp.ndarray:
             non_padding_indices = jnp.nonzero((actual != pad_idx))
 
             matches = jnp.equal(preds[non_padding_indices], actual[non_padding_indices])
@@ -98,7 +98,7 @@ class Trainer:
         # ================== #
         # inference #
         @jit
-        def infer(params, words):
+        def infer(params: dict, words: jnp.ndarray) -> jnp.ndarray:
             logits = self.model.apply(params, words, rngs={"dropout": self.model_rngs["dropout"]})
             proba = jax.nn.log_softmax(logits, axis=-1)
             preds = jnp.argmax(proba, axis=-1)
@@ -106,13 +106,13 @@ class Trainer:
             return preds
 
         @jit
-        def batch_infer(params, words_batched):
+        def batch_infer(params: dict, words_batched: jnp.ndarray) -> jnp.ndarray:
             preds = vmap(infer, in_axes=(None, 0))(params, words_batched)
             return preds
 
         # ================== #
         # evaluate #
-        def evaluate(params, test_loader):
+        def evaluate(params: dict, test_loader: Any) -> jnp.ndarray:
             acc_per_batch = list()
             for batch in tqdm(test_loader):
                 words, labels = batch
@@ -127,7 +127,7 @@ class Trainer:
 
         self.evaluate = evaluate
 
-    def fit_and_eval(self, train_loader, val_loader, test_loader):
+    def fit_and_eval(self, train_loader: Any, val_loader: Any, test_loader: Any) -> train_state.TrainState:
         # initialise the train state
         state = train_state.TrainState.create(
             apply_fn=self.model.apply,  # the forward function
