@@ -18,8 +18,20 @@ python main.py --lr 0.01 --epochs 5 --batch-size 128 --seed 2023 --dropout 0.2 \
 
 _The Trainer module is defined to train, evaluate and log to wandb simultaneously._
 
-## Results
+## Logs and Results
 Check the wandb metrics [here](https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf).
+
+### Training Loss
+<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
+</iframe>
+
+### Validation Loss
+<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
+</iframe>
+
+### Test Set Accuracy
+<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
+</iframe>
 
 
 ## Environment Setup
