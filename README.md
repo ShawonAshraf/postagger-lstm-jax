@@ -25,6 +25,7 @@ Check the wandb metrics [here](https://wandb.ai/shawonashraf/postagger-lstm-jax/
 
 __Version Requirements:__
 - Python 3.11
+- CUDA 12.2
 
 
 ```bash
