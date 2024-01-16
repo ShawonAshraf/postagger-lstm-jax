@@ -21,19 +21,6 @@ _The Trainer module is defined to train, evaluate and log to wandb simultaneousl
 ## Logs and Results
 Check the wandb metrics [here](https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf).
 
-### Training Loss
-<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
-</iframe>
-
-### Validation Loss
-<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
-</iframe>
-
-### Test Set Accuracy
-<iframe src="https://wandb.ai/shawonashraf/postagger-lstm-jax/runs/bs5n1ukb?workspace=user-shawonashraf" style="border:none;height:1024px;width:100%">
-</iframe>
-
-
 ## Environment Setup
 
 __Version Requirements:__
