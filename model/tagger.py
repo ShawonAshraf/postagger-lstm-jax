@@ -18,8 +18,8 @@ class LSTMTagger(nn.Module):
     embedding_dimensions: int
     lstm_hidden_dims: int
     n_labels: int
-    training = True
-    lstm_seed = 2024
+    lstm_seed: int
+    dropout_rate: float
 
     def setup(self) -> None:
         # embedding layer
@@ -32,7 +32,7 @@ class LSTMTagger(nn.Module):
         self.lstm = nn.OptimizedLSTMCell(features=self.lstm_hidden_dims, name="lstm")
 
         # dropout layer
-        self.dropout = nn.Dropout(0.2, deterministic=not self.training)
+        self.dropout = nn.Dropout(self.dropout_rate, deterministic=True)
 
         # dense layer
         self.dense = nn.Dense(features=self.n_labels, name="dense")
